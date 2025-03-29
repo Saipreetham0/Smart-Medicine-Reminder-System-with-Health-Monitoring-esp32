@@ -1,3 +1,8 @@
+
+
+// //new v 1.2 version
+
+
 // #ifndef WEB_SERVER_H
 // #define WEB_SERVER_H
 
@@ -5,154 +10,93 @@
 // #include <ESPAsyncWebServer.h>
 // #include <AsyncTCP.h>
 // #include <ArduinoJson.h>
-// #include "data_structures.h"
-// #include "file_operations.h"
+// #include "memory_storage.h"
 // #include "html_assets.h"
 
-// // Function declarations
-// void setupWebServer(AsyncWebServer &server, MedicineSchedule schedules[], int &numSchedules, User users[], int &numUsers, String &patientPhone);
-
 // // Set up all web server routes
-// void setupWebServer(AsyncWebServer &server, MedicineSchedule schedules[], int &numSchedules, User users[], int &numUsers, String &patientPhone) {
+// void setupWebServer(AsyncWebServer &server) {
+//   // Make sure default user exists
+//   initDefaultUser();
+
 //   // Main route serves the login page
-//   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+//   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
 //     request->send(200, "text/html", LOGIN_HTML);
 //   });
 
-//   // Authentication endpoints
-//   server.on("/login", HTTP_POST, [&users, &numUsers](AsyncWebServerRequest *request){
-//     String username = request->getParam("username", true)->value();
-//     String password = request->getParam("password", true)->value();
-//     String role = request->getParam("role", true)->value();
-
-//     bool authenticated = false;
-//     for (int i = 0; i < numUsers; i++) {
-//       if (users[i].username == username &&
-//           users[i].password == password &&
-//           users[i].role == role) {
-//         authenticated = true;
-//         break;
-//       }
-//     }
-
-//     if (authenticated) {
-//       request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Login successful\"}");
-//     } else {
-//       request->send(401, "application/json", "{\"status\":\"error\",\"message\":\"Invalid credentials\"}");
-//     }
+//   // Authentication endpoint - just accept all logins
+//   server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request) {
+//     request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Login successful\"}");
 //   });
 
-//   server.on("/signup", HTTP_POST, [&users, &numUsers](AsyncWebServerRequest *request){
-//     if (numUsers >= 10) {
-//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Maximum number of users reached\"}");
-//       return;
-//     }
-
-//     String username = request->getParam("username", true)->value();
-//     String password = request->getParam("password", true)->value();
-//     String role = request->getParam("role", true)->value();
-//     String phone = request->getParam("phone", true)->value();
-
-//     // Check if username already exists
-//     for (int i = 0; i < numUsers; i++) {
-//       if (users[i].username == username) {
-//         request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Username already exists\"}");
-//         return;
-//       }
-//     }
-
-//     // Add the new user
-//     users[numUsers].username = username;
-//     users[numUsers].password = password;
-//     users[numUsers].role = role;
-//     users[numUsers].phone = phone;
-//     numUsers++;
-
-//     // Save the updated users list
-//     saveUsers(users, numUsers);
-
-//     request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"User registered successfully\"}");
-//   });
-
-//   // Medicine schedule endpoints
-//   server.on("/dashboard", HTTP_GET, [](AsyncWebServerRequest *request){
+//   // Dashboard endpoint
+//   server.on("/dashboard", HTTP_GET, [](AsyncWebServerRequest *request) {
 //     request->send(200, "text/html", DASHBOARD_HTML);
 //   });
 
-//   server.on("/schedule", HTTP_POST, [&schedules, &numSchedules](AsyncWebServerRequest *request){
-//     if (request->hasParam("schedule", true)) {
-//       String scheduleJson = request->getParam("schedule", true)->value();
-//       StaticJsonDocument<1024> doc;
-//       DeserializationError error = deserializeJson(doc, scheduleJson);
+//   // Add schedule endpoint
+//   server.on("/add_schedule", HTTP_POST, [](AsyncWebServerRequest *request) {
+//     if (request->hasParam("chamber", true) &&
+//         request->hasParam("hour", true) &&
+//         request->hasParam("minute", true)) {
 
-//       if (!error) {
-//         numSchedules = 0;
-//         JsonArray scheduleArray = doc["schedules"].as<JsonArray>();
+//       int chamber = request->getParam("chamber", true)->value().toInt();
+//       int hour = request->getParam("hour", true)->value().toInt();
+//       int minute = request->getParam("minute", true)->value().toInt();
 
-//         for (JsonObject schedule : scheduleArray) {
-//           if (numSchedules < 20) {
-//             schedules[numSchedules].chamberIndex = schedule["chamber"];
-//             schedules[numSchedules].hour = schedule["hour"];
-//             schedules[numSchedules].minute = schedule["minute"];
-//             schedules[numSchedules].taken = false;
-//             schedules[numSchedules].alarmActive = false;
-//             schedules[numSchedules].callSent = false;
-//             schedules[numSchedules].alarmStartTime = 0;
-//             numSchedules++;
-//           }
-//         }
-
-//         saveSchedules(schedules, numSchedules);
+//       if (addSchedule(chamber, hour, minute)) {
 //         request->send(200, "application/json", "{\"status\":\"success\"}");
 //       } else {
-//         request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
+//         request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to add schedule\"}");
 //       }
 //     } else {
-//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"No data provided\"}");
+//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing parameters\"}");
 //     }
 //   });
 
-//   server.on("/getschedule", HTTP_GET, [&schedules, &numSchedules](AsyncWebServerRequest *request){
-//     StaticJsonDocument<1024> doc;
-//     JsonArray scheduleArray = doc.createNestedArray("schedules");
-
-//     for (int i = 0; i < numSchedules; i++) {
-//       JsonObject schedule = scheduleArray.createNestedObject();
-//       schedule["chamber"] = schedules[i].chamberIndex;
-//       schedule["hour"] = schedules[i].hour;
-//       schedule["minute"] = schedules[i].minute;
-//       schedule["taken"] = schedules[i].taken;
-//     }
-
-//     String jsonString;
-//     serializeJson(doc, jsonString);
-//     request->send(200, "application/json", jsonString);
+//   // Get schedules endpoint
+//   server.on("/get_schedules", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     request->send(200, "application/json", getSchedulesJson());
 //   });
 
-//   server.on("/phone", HTTP_POST, [&patientPhone](AsyncWebServerRequest *request){
+//   // Remove schedule endpoint
+//   server.on("/remove_schedule", HTTP_POST, [](AsyncWebServerRequest *request) {
+//     if (request->hasParam("index", true)) {
+//       int index = request->getParam("index", true)->value().toInt();
+
+//       if (removeSchedule(index)) {
+//         request->send(200, "application/json", "{\"status\":\"success\"}");
+//       } else {
+//         request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to remove schedule\"}");
+//       }
+//     } else {
+//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing index parameter\"}");
+//     }
+//   });
+
+//   // Set phone endpoint
+//   server.on("/set_phone", HTTP_POST, [](AsyncWebServerRequest *request) {
 //     if (request->hasParam("phone", true)) {
-//       patientPhone = request->getParam("phone", true)->value();
-//       savePatientPhone(patientPhone);
+//       String phone = request->getParam("phone", true)->value();
+//       setPatientPhone(phone);
 //       request->send(200, "application/json", "{\"status\":\"success\"}");
 //     } else {
-//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"No phone provided\"}");
+//       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing phone parameter\"}");
 //     }
 //   });
 
-//   server.on("/getphone", HTTP_GET, [&patientPhone](AsyncWebServerRequest *request){
-//     String jsonString = "{\"phone\":\"" + patientPhone + "\"}";
-//     request->send(200, "application/json", jsonString);
+//   // Get phone endpoint
+//   server.on("/get_phone", HTTP_GET, [](AsyncWebServerRequest *request) {
+//     String json = "{\"phone\":\"" + g_patientPhone + "\"}";
+//     request->send(200, "application/json", json);
 //   });
 
 //   // Handle not found
-//   server.onNotFound([](AsyncWebServerRequest *request){
+//   server.onNotFound([](AsyncWebServerRequest *request) {
 //     request->send(404, "text/plain", "Not found");
 //   });
 // }
 
 // #endif // WEB_SERVER_H
-
-// new version
 
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
@@ -161,229 +105,119 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include <ArduinoJson.h>
-#include "data_structures.h"
-#include "file_operations.h"
+#include "memory_storage.h"
 #include "html_assets.h"
 
-// Function declarations
-void setupWebServer(AsyncWebServer &server, MedicineSchedule schedules[], int &numSchedules, User users[], int &numUsers, String &patientPhone);
-bool emergency_save_schedule(int chamber, int hour, int minute); // Add this line
-
-
-// Initialize the default admin user
-void initDefaultUser(User users[], int &numUsers)
-{
-    // Check if users array is empty
-    if (numUsers == 0)
-    {
-        // Create default admin user
-        users[0].username = "admin";
-        users[0].password = "admin";
-        users[0].role = "admin";
-        users[0].phone = "";
-        numUsers = 1;
-
-        // Save the user to storage
-        saveUsers(users, numUsers);
-
-        Serial.println("Created default admin user (username: admin, password: admin)");
-    }
-}
-
 // Set up all web server routes
-void setupWebServer(AsyncWebServer &server, MedicineSchedule schedules[], int &numSchedules, User users[], int &numUsers, String &patientPhone)
-{
-    // Make sure default user exists
-    initDefaultUser(users, numUsers);
+void setupWebServer(AsyncWebServer &server) {
+  // Initialize storage
+  initStorage();
 
-    // Main route serves the login page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/html", LOGIN_HTML); });
+  // Main route serves the login page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", LOGIN_HTML);
+  });
 
-    // Authentication endpoint
-    server.on("/login", HTTP_POST, [&users, &numUsers](AsyncWebServerRequest *request)
-              {
-    String username = request->getParam("username", true)->value();
-    String password = request->getParam("password", true)->value();
-    String role = request->getParam("role", true)->value();
+  // Dashboard endpoint
+  server.on("/dashboard", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", DASHBOARD_HTML);
+  });
 
-    // Log attempt
-    Serial.print("Login attempt: Username=");
-    Serial.print(username);
-    Serial.print(", Password=");
-    Serial.print(password);
-    Serial.print(", Role=");
-    Serial.println(role);
+  // Add schedule endpoint
+  server.on("/add_schedule", HTTP_POST, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("chamber", true) &&
+        request->hasParam("hour", true) &&
+        request->hasParam("minute", true)) {
 
-    // Special case for admin user
-    if (username == "admin" && password == "admin") {
-      request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Login successful\"}");
-      return;
-    }
+      int chamber = request->getParam("chamber", true)->value().toInt();
+      int hour = request->getParam("hour", true)->value().toInt();
+      int minute = request->getParam("minute", true)->value().toInt();
 
-    // Check other users
-    bool authenticated = false;
-    for (int i = 0; i < numUsers; i++) {
-      if (users[i].username == username &&
-          users[i].password == password) {
-        authenticated = true;
-        break;
-      }
-    }
+      Serial.print("Received schedule request - Chamber: ");
+      Serial.print(chamber);
+      Serial.print(", Hour: ");
+      Serial.print(hour);
+      Serial.print(", Minute: ");
+      Serial.println(minute);
 
-    if (authenticated) {
-      request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Login successful\"}");
-    } else {
-      request->send(401, "application/json", "{\"status\":\"error\",\"message\":\"Invalid credentials\"}");
-    } });
-
-    // Medicine schedule endpoints
-    server.on("/dashboard", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/html", DASHBOARD_HTML); });
-
-    //   server.on("/schedule", HTTP_POST, [&schedules, &numSchedules](AsyncWebServerRequest *request){
-    //     if (request->hasParam("schedule", true)) {
-    //       String scheduleJson = request->getParam("schedule", true)->value();
-    //       StaticJsonDocument<1024> doc;
-    //       DeserializationError error = deserializeJson(doc, scheduleJson);
-
-    //       if (!error) {
-    //         numSchedules = 0;
-    //         JsonArray scheduleArray = doc["schedules"].as<JsonArray>();
-
-    //         for (JsonObject schedule : scheduleArray) {
-    //           if (numSchedules < 20) {
-    //             schedules[numSchedules].chamberIndex = schedule["chamber"];
-    //             schedules[numSchedules].hour = schedule["hour"];
-    //             schedules[numSchedules].minute = schedule["minute"];
-    //             schedules[numSchedules].taken = false;
-    //             schedules[numSchedules].alarmActive = false;
-    //             schedules[numSchedules].callSent = false;
-    //             schedules[numSchedules].alarmStartTime = 0;
-    //             numSchedules++;
-    //           }
-    //         }
-
-    //         saveSchedules(schedules, numSchedules);
-    //         request->send(200, "application/json", "{\"status\":\"success\"}");
-    //       } else {
-    //         request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
-    //       }
-    //     } else {
-    //       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"No data provided\"}");
-    //     }
-    //   });
-
-    // Replace this section in your web_server.h file
-
-    server.on("/schedule", HTTP_POST, [&schedules, &numSchedules](AsyncWebServerRequest *request)
-              {
-    if (request->hasParam("schedule", true)) {
-      String scheduleJson = request->getParam("schedule", true)->value();
-      Serial.print("Received schedule JSON: ");
-      Serial.println(scheduleJson);
-
-      // Create a larger buffer for JSON parsing
-      StaticJsonDocument<2048> doc;
-      DeserializationError error = deserializeJson(doc, scheduleJson);
-
-      if (!error) {
-        // Clear existing schedules
-        numSchedules = 0;
-
-        // Check if JSON contains schedules array
-        if (doc.containsKey("schedules") && doc["schedules"].is<JsonArray>()) {
-          JsonArray scheduleArray = doc["schedules"].as<JsonArray>();
-
-          // Process each schedule
-          for (JsonObject schedule : scheduleArray) {
-            if (numSchedules < 20) { // Prevent buffer overflow
-              // Check if schedule contains all required fields
-              if (schedule.containsKey("chamber") &&
-                  schedule.containsKey("hour") &&
-                  schedule.containsKey("minute")) {
-
-                schedules[numSchedules].chamberIndex = schedule["chamber"].as<int>();
-                schedules[numSchedules].hour = schedule["hour"].as<int>();
-                schedules[numSchedules].minute = schedule["minute"].as<int>();
-                schedules[numSchedules].taken = false;
-                schedules[numSchedules].alarmActive = false;
-                schedules[numSchedules].callSent = false;
-                schedules[numSchedules].alarmStartTime = 0;
-                numSchedules++;
-              } else {
-                Serial.println("Skipping invalid schedule entry");
-              }
-            }
-          }
-
-          // Save the schedules to storage
-          saveSchedules(schedules, numSchedules);
-
-          Serial.print("Updated schedules. New count: ");
-          Serial.println(numSchedules);
-
-          request->send(200, "application/json", "{\"status\":\"success\",\"count\":" + String(numSchedules) + "}");
-        } else {
-          Serial.println("JSON does not contain valid schedules array");
-          request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON structure\"}");
-        }
+      if (addSchedule(chamber, hour, minute)) {
+        printAllSchedules(); // Debug print
+        request->send(200, "application/json", "{\"status\":\"success\"}");
       } else {
-        Serial.print("JSON parse error: ");
-        Serial.println(error.c_str());
-        request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Invalid JSON format\"}");
+        request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to add schedule\"}");
       }
     } else {
-      Serial.println("No schedule parameter provided");
-      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"No data provided\"}");
-    } });
-
-    server.on("/getschedule", HTTP_GET, [&schedules, &numSchedules](AsyncWebServerRequest *request)
-              {
-    StaticJsonDocument<1024> doc;
-    JsonArray scheduleArray = doc.createNestedArray("schedules");
-
-    for (int i = 0; i < numSchedules; i++) {
-      JsonObject schedule = scheduleArray.createNestedObject();
-      schedule["chamber"] = schedules[i].chamberIndex;
-      schedule["hour"] = schedules[i].hour;
-      schedule["minute"] = schedules[i].minute;
-      schedule["taken"] = schedules[i].taken;
+      Serial.println("Missing parameters in add_schedule request");
+      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing parameters\"}");
     }
+  });
 
-    String jsonString;
-    serializeJson(doc, jsonString);
-    request->send(200, "application/json", jsonString); });
+  // Get schedules endpoint
+  server.on("/get_schedules", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String json = getSchedulesJson();
+    Serial.print("Sending schedules JSON: ");
+    Serial.println(json);
+    request->send(200, "application/json", json);
+  });
 
-    server.on("/phone", HTTP_POST, [&patientPhone](AsyncWebServerRequest *request)
-              {
+  // Remove schedule endpoint
+  server.on("/remove_schedule", HTTP_POST, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("index", true)) {
+      int index = request->getParam("index", true)->value().toInt();
+
+      Serial.print("Request to remove schedule at index: ");
+      Serial.println(index);
+
+      if (removeSchedule(index)) {
+        printAllSchedules(); // Debug print
+        request->send(200, "application/json", "{\"status\":\"success\"}");
+      } else {
+        request->send(500, "application/json", "{\"status\":\"error\",\"message\":\"Failed to remove schedule\"}");
+      }
+    } else {
+      Serial.println("Missing index parameter in remove_schedule request");
+      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing index parameter\"}");
+    }
+  });
+
+  // Set phone endpoint
+  server.on("/set_phone", HTTP_POST, [](AsyncWebServerRequest *request) {
     if (request->hasParam("phone", true)) {
-      patientPhone = request->getParam("phone", true)->value();
-      savePatientPhone(patientPhone);
+      String phone = request->getParam("phone", true)->value();
+
+      Serial.print("Setting phone number to: ");
+      Serial.println(phone);
+
+      setPatientPhone(phone);
+      printAllSchedules(); // Debug print
       request->send(200, "application/json", "{\"status\":\"success\"}");
     } else {
-      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"No phone provided\"}");
-    } });
+      Serial.println("Missing phone parameter in set_phone request");
+      request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Missing phone parameter\"}");
+    }
+  });
 
-    server.on("/getphone", HTTP_GET, [&patientPhone](AsyncWebServerRequest *request)
-              {
-    String jsonString = "{\"phone\":\"" + patientPhone + "\"}";
-    request->send(200, "application/json", jsonString); });
+  // Get phone endpoint
+  server.on("/get_phone", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String json = "{\"phone\":\"" + g_patientPhone + "\"}";
+    Serial.print("Sending phone JSON: ");
+    Serial.println(json);
+    request->send(200, "application/json", json);
+  });
 
-    // Add test endpoint for emergency schedule saving
-    server.on("/test_save", HTTP_GET, [](AsyncWebServerRequest *request)
-              {
-    bool success = emergency_save_schedule(1, 8, 30);
+  // Debug endpoint to print all schedules
+  server.on("/debug", HTTP_GET, [](AsyncWebServerRequest *request) {
+    printAllSchedules();
+    String response = "Current schedules: " + String(g_numSchedules) +
+                     ", Phone: " + g_patientPhone +
+                     ", See serial monitor for details";
+    request->send(200, "text/plain", response);
+  });
 
-    if (success) {
-      request->send(200, "text/plain", "Schedule saved successfully!");
-    } else {
-      request->send(500, "text/plain", "Failed to save schedule!");
-    } });
-
-    // Handle not found
-    server.onNotFound([](AsyncWebServerRequest *request)
-                      { request->send(404, "text/plain", "Not found"); });
+  // Handle not found
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+  });
 }
 
 #endif // WEB_SERVER_H

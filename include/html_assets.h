@@ -1,19 +1,21 @@
+
+
 // #ifndef HTML_ASSETS_H
 // #define HTML_ASSETS_H
 
 // #include <Arduino.h>
 
-// // Login HTML page
+// // Login HTML page - Super simple
 // const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 // <!DOCTYPE html>
 // <html lang="en">
 // <head>
 //     <meta charset="UTF-8">
 //     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//     <title>Smart Medicine Reminder - Login</title>
+//     <title>Smart Medicine Reminder</title>
 //     <style>
 //         body {
-//             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+//             font-family: Arial, sans-serif;
 //             background-color: #f0f7ff;
 //             margin: 0;
 //             padding: 0;
@@ -42,60 +44,6 @@
 //             margin-bottom: 30px;
 //         }
 
-//         .tab-container {
-//             display: flex;
-//             border-bottom: 1px solid #dadce0;
-//             margin-bottom: 20px;
-//         }
-
-//         .tab {
-//             flex: 1;
-//             padding: 10px;
-//             cursor: pointer;
-//             position: relative;
-//         }
-
-//         .tab.active {
-//             color: #1a73e8;
-//             font-weight: 500;
-//         }
-
-//         .tab.active::after {
-//             content: '';
-//             position: absolute;
-//             bottom: -1px;
-//             left: 0;
-//             width: 100%;
-//             height: 2px;
-//             background-color: #1a73e8;
-//         }
-
-//         .form-group {
-//             margin-bottom: 15px;
-//             text-align: left;
-//         }
-
-//         label {
-//             display: block;
-//             margin-bottom: 5px;
-//             color: #5f6368;
-//             font-weight: 500;
-//         }
-
-//         input, select {
-//             width: 100%;
-//             padding: 10px;
-//             border: 1px solid #dadce0;
-//             border-radius: 4px;
-//             box-sizing: border-box;
-//             font-size: 14px;
-//         }
-
-//         input:focus, select:focus {
-//             outline: none;
-//             border-color: #1a73e8;
-//         }
-
 //         .button {
 //             background-color: #1a73e8;
 //             color: white;
@@ -108,187 +56,19 @@
 //             margin-top: 10px;
 //             font-weight: 500;
 //         }
-
-//         .button:hover {
-//             background-color: #0d66d0;
-//         }
-
-//         .form-container {
-//             display: none;
-//         }
-
-//         .form-container.active {
-//             display: block;
-//         }
 //     </style>
 // </head>
 // <body>
 //     <div class="card">
 //         <h1>Smart Medicine Reminder</h1>
 //         <p class="subtitle">Health Monitoring System for Senior Citizens</p>
-
-//         <div class="tab-container">
-//             <div class="tab active" id="login-tab">Login</div>
-//             <div class="tab" id="signup-tab">Sign Up</div>
-//         </div>
-
-//         <!-- Login Form -->
-//         <div class="form-container active" id="login-form">
-//             <div class="form-group">
-//                 <label for="username">Username</label>
-//                 <input type="text" id="username" placeholder="Enter username">
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="password">Password</label>
-//                 <input type="password" id="password" placeholder="Enter password">
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="role">Role</label>
-//                 <select id="role">
-//                     <option value="" selected disabled>Select role</option>
-//                     <option value="patient">Patient</option>
-//                     <option value="caregiver">Caregiver</option>
-//                     <option value="doctor">Doctor</option>
-//                 </select>
-//             </div>
-
-//             <button class="button" id="login-button">Login</button>
-//         </div>
-
-//         <!-- Signup Form -->
-//         <div class="form-container" id="signup-form">
-//             <div class="form-group">
-//                 <label for="new-username">Username</label>
-//                 <input type="text" id="new-username" placeholder="Choose a username">
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="new-password">Password</label>
-//                 <input type="password" id="new-password" placeholder="Choose a password">
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="confirm-password">Confirm Password</label>
-//                 <input type="password" id="confirm-password" placeholder="Confirm password">
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="new-role">Role</label>
-//                 <select id="new-role">
-//                     <option value="" selected disabled>Select role</option>
-//                     <option value="patient">Patient</option>
-//                     <option value="caregiver">Caregiver</option>
-//                     <option value="doctor">Doctor</option>
-//                 </select>
-//             </div>
-
-//             <div class="form-group">
-//                 <label for="phone">Phone Number</label>
-//                 <input type="tel" id="phone" placeholder="Enter phone number">
-//             </div>
-
-//             <button class="button" id="signup-button">Sign Up</button>
-//         </div>
+//         <button class="button" onclick="window.location.href='/dashboard'">Enter Dashboard</button>
 //     </div>
-
-//     <script>
-//         // Tab switching logic
-//         const loginTab = document.getElementById('login-tab');
-//         const signupTab = document.getElementById('signup-tab');
-//         const loginForm = document.getElementById('login-form');
-//         const signupForm = document.getElementById('signup-form');
-
-//         loginTab.addEventListener('click', function() {
-//             loginTab.classList.add('active');
-//             signupTab.classList.remove('active');
-//             loginForm.classList.add('active');
-//             signupForm.classList.remove('active');
-//         });
-
-//         signupTab.addEventListener('click', function() {
-//             signupTab.classList.add('active');
-//             loginTab.classList.remove('active');
-//             signupForm.classList.add('active');
-//             loginForm.classList.remove('active');
-//         });
-
-//         // Login form handling
-//         document.getElementById('login-button').addEventListener('click', function() {
-//             const username = document.getElementById('username').value;
-//             const password = document.getElementById('password').value;
-//             const role = document.getElementById('role').value;
-
-//             if (!username || !password || !role) {
-//                 alert('Please fill in all fields');
-//                 return;
-//             }
-
-//             fetch('/login', {
-//                 method: 'POST',
-//                 headers: {
-//                     'Content-Type': 'application/x-www-form-urlencoded',
-//                 },
-//                 body: `username=${username}&password=${password}&role=${role}`
-//             })
-//             .then(response => response.json())
-//             .then(data => {
-//                 if (data.status === 'success') {
-//                     window.location.href = '/dashboard';
-//                 } else {
-//                     alert(data.message);
-//                 }
-//             })
-//             .catch(error => {
-//                 console.error('Error:', error);
-//                 alert('An error occurred during login');
-//             });
-//         });
-
-//         // Signup form handling
-//         document.getElementById('signup-button').addEventListener('click', function() {
-//             const username = document.getElementById('new-username').value;
-//             const password = document.getElementById('new-password').value;
-//             const confirmPassword = document.getElementById('confirm-password').value;
-//             const role = document.getElementById('new-role').value;
-//             const phone = document.getElementById('phone').value;
-
-//             if (!username || !password || !confirmPassword || !role || !phone) {
-//                 alert('Please fill in all fields');
-//                 return;
-//             }
-
-//             if (password !== confirmPassword) {
-//                 alert('Passwords do not match');
-//                 return;
-//             }
-
-//             fetch('/signup', {
-//                 method: 'POST',
-//                 headers: {
-//                     'Content-Type': 'application/x-www-form-urlencoded',
-//                 },
-//                 body: `username=${username}&password=${password}&role=${role}&phone=${phone}`
-//             })
-//             .then(response => response.json())
-//             .then(data => {
-//                 alert(data.message);
-//                 if (data.status === 'success') {
-//                     loginTab.click();
-//                 }
-//             })
-//             .catch(error => {
-//                 console.error('Error:', error);
-//                 alert('An error occurred during signup');
-//             });
-//         });
-//     </script>
 // </body>
 // </html>
 // )rawliteral";
 
-// // Dashboard HTML page
+// // Dashboard HTML page - Simplified
 // const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 // <!DOCTYPE html>
 // <html lang="en">
@@ -298,14 +78,14 @@
 //     <title>Medicine Reminder Dashboard</title>
 //     <style>
 //         body {
-//             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+//             font-family: Arial, sans-serif;
 //             background-color: #f5f5f5;
 //             margin: 0;
 //             padding: 20px;
 //         }
 
 //         .container {
-//             max-width: 1000px;
+//             max-width: 800px;
 //             margin: 0 auto;
 //         }
 
@@ -360,10 +140,6 @@
 //             font-weight: 500;
 //         }
 
-//         .button:hover {
-//             background-color: #0d66d0;
-//         }
-
 //         table {
 //             width: 100%;
 //             border-collapse: collapse;
@@ -388,6 +164,25 @@
 //             padding: 5px 10px;
 //             cursor: pointer;
 //         }
+
+//         .status {
+//             padding: 10px;
+//             margin-top: 10px;
+//             border-radius: 4px;
+//             display: none;
+//         }
+
+//         .success {
+//             background-color: #d4edda;
+//             color: #155724;
+//             display: block;
+//         }
+
+//         .error {
+//             background-color: #f8d7da;
+//             color: #721c24;
+//             display: block;
+//         }
 //     </style>
 // </head>
 // <body>
@@ -405,6 +200,7 @@
 //                     <button class="button" id="save-phone-button">Save</button>
 //                 </div>
 //             </div>
+//             <div id="phone-status" class="status"></div>
 //         </div>
 
 //         <div class="card">
@@ -424,13 +220,56 @@
 //                     </select>
 //                 </div>
 //                 <div class="form-group">
-//                     <label for="time-input">Time</label>
-//                     <input type="time" id="time-input">
+//                     <label for="hour-select">Hour</label>
+//                     <select id="hour-select">
+//                         <option value="0">00</option>
+//                         <option value="1">01</option>
+//                         <option value="2">02</option>
+//                         <option value="3">03</option>
+//                         <option value="4">04</option>
+//                         <option value="5">05</option>
+//                         <option value="6">06</option>
+//                         <option value="7">07</option>
+//                         <option value="8">08</option>
+//                         <option value="9">09</option>
+//                         <option value="10">10</option>
+//                         <option value="11">11</option>
+//                         <option value="12">12</option>
+//                         <option value="13">13</option>
+//                         <option value="14">14</option>
+//                         <option value="15">15</option>
+//                         <option value="16">16</option>
+//                         <option value="17">17</option>
+//                         <option value="18">18</option>
+//                         <option value="19">19</option>
+//                         <option value="20">20</option>
+//                         <option value="21">21</option>
+//                         <option value="22">22</option>
+//                         <option value="23">23</option>
+//                     </select>
+//                 </div>
+//                 <div class="form-group">
+//                     <label for="minute-select">Minute</label>
+//                     <select id="minute-select">
+//                         <option value="0">00</option>
+//                         <option value="5">05</option>
+//                         <option value="10">10</option>
+//                         <option value="15">15</option>
+//                         <option value="20">20</option>
+//                         <option value="25">25</option>
+//                         <option value="30">30</option>
+//                         <option value="35">35</option>
+//                         <option value="40">40</option>
+//                         <option value="45">45</option>
+//                         <option value="50">50</option>
+//                         <option value="55">55</option>
+//                     </select>
 //                 </div>
 //                 <div class="form-group" style="flex: 0.3; display: flex; align-items: flex-end;">
 //                     <button class="button" id="add-schedule-button">Add</button>
 //                 </div>
 //             </div>
+//             <div id="schedule-status" class="status"></div>
 
 //             <h3>Current Schedules</h3>
 //             <table id="schedule-table">
@@ -458,13 +297,14 @@
 
 //         // Load patient phone number
 //         function loadPhone() {
-//             fetch('/getphone')
+//             fetch('/get_phone')
 //                 .then(response => response.json())
 //                 .then(data => {
 //                     document.getElementById('patient-phone').value = data.phone;
 //                 })
 //                 .catch(error => {
 //                     console.error('Error loading phone:', error);
+//                     showStatus('phone-status', 'Failed to load phone number', false);
 //                 });
 //         }
 
@@ -472,7 +312,7 @@
 //         document.getElementById('save-phone-button').addEventListener('click', function() {
 //             const phone = document.getElementById('patient-phone').value;
 
-//             fetch('/phone', {
+//             fetch('/set_phone', {
 //                 method: 'POST',
 //                 headers: {
 //                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -482,24 +322,36 @@
 //             .then(response => response.json())
 //             .then(data => {
 //                 if (data.status === 'success') {
-//                     alert('Phone number saved successfully!');
+//                     showStatus('phone-status', 'Phone number saved successfully!', true);
 //                 } else {
-//                     alert('Failed to save phone number');
+//                     showStatus('phone-status', 'Failed to save phone number', false);
 //                 }
 //             })
 //             .catch(error => {
 //                 console.error('Error:', error);
-//                 alert('An error occurred while saving phone number');
+//                 showStatus('phone-status', 'An error occurred while saving phone number', false);
 //             });
 //         });
 
 //         // Load schedules
 //         function loadSchedules() {
-//             fetch('/getschedule')
+//             fetch('/get_schedules')
 //                 .then(response => response.json())
 //                 .then(data => {
 //                     const scheduleBody = document.getElementById('schedule-body');
 //                     scheduleBody.innerHTML = '';
+
+//                     if (!data.schedules || data.schedules.length === 0) {
+//                         // No schedules
+//                         const row = document.createElement('tr');
+//                         const cell = document.createElement('td');
+//                         cell.textContent = 'No schedules found';
+//                         cell.colSpan = 4;
+//                         cell.style.textAlign = 'center';
+//                         row.appendChild(cell);
+//                         scheduleBody.appendChild(row);
+//                         return;
+//                     }
 
 //                     data.schedules.forEach((schedule, index) => {
 //                         const row = document.createElement('tr');
@@ -537,80 +389,72 @@
 //                 })
 //                 .catch(error => {
 //                     console.error('Error loading schedules:', error);
+//                     showStatus('schedule-status', 'Failed to load schedules', false);
 //                 });
 //         }
 
 //         // Add new schedule
 //         document.getElementById('add-schedule-button').addEventListener('click', function() {
 //             const chamber = document.getElementById('chamber-select').value;
-//             const timeInput = document.getElementById('time-input').value;
+//             const hour = document.getElementById('hour-select').value;
+//             const minute = document.getElementById('minute-select').value;
 
-//             if (!timeInput) {
-//                 alert('Please select a time');
-//                 return;
-//             }
-
-//             const [hours, minutes] = timeInput.split(':');
-
-//             // Get current schedules first
-//             fetch('/getschedule')
-//                 .then(response => response.json())
-//                 .then(data => {
-//                     const schedules = data.schedules || [];
-
-//                     // Add new schedule
-//                     schedules.push({
-//                         chamber: parseInt(chamber),
-//                         hour: parseInt(hours),
-//                         minute: parseInt(minutes),
-//                         taken: false
-//                     });
-
-//                     // Update schedules
-//                     updateSchedules(schedules);
-//                 })
-//                 .catch(error => {
-//                     console.error('Error:', error);
-//                 });
-//         });
-
-//         // Remove schedule
-//         function removeSchedule(index) {
-//             fetch('/getschedule')
-//                 .then(response => response.json())
-//                 .then(data => {
-//                     const schedules = data.schedules || [];
-//                     schedules.splice(index, 1);
-//                     updateSchedules(schedules);
-//                 })
-//                 .catch(error => {
-//                     console.error('Error:', error);
-//                 });
-//         }
-
-//         // Update schedules on server
-//         function updateSchedules(schedules) {
-//             const scheduleJson = JSON.stringify({ schedules: schedules });
-
-//             fetch('/schedule', {
+//             fetch('/add_schedule', {
 //                 method: 'POST',
 //                 headers: {
 //                     'Content-Type': 'application/x-www-form-urlencoded',
 //                 },
-//                 body: `schedule=${encodeURIComponent(scheduleJson)}`
+//                 body: `chamber=${chamber}&hour=${hour}&minute=${minute}`
 //             })
 //             .then(response => response.json())
 //             .then(data => {
 //                 if (data.status === 'success') {
+//                     showStatus('schedule-status', 'Schedule added successfully!', true);
 //                     loadSchedules(); // Reload schedules
 //                 } else {
-//                     alert('Failed to update schedules');
+//                     showStatus('schedule-status', data.message || 'Failed to add schedule', false);
 //                 }
 //             })
 //             .catch(error => {
 //                 console.error('Error:', error);
-//                 alert('An error occurred while updating schedules');
+//                 showStatus('schedule-status', 'An error occurred while adding schedule', false);
 //             });
+//         });
+
+//         // Remove schedule
+//         function removeSchedule(index) {
+//             fetch('/remove_schedule', {
+//                 method: 'POST',
+//                 headers: {
+//                     'Content-Type': 'application/x-www-form-urlencoded',
+//                 },
+//                 body: `index=${index}`
+//             })
+//             .then(response => response.json())
+//             .then(data => {
+//                 if (data.status === 'success') {
+//                     showStatus('schedule-status', 'Schedule removed successfully!', true);
+//                     loadSchedules(); // Reload schedules
+//                 } else {
+//                     showStatus('schedule-status', data.message || 'Failed to remove schedule', false);
+//                 }
+//             })
+//             .catch(error => {
+//                 console.error('Error:', error);
+//                 showStatus('schedule-status', 'An error occurred while removing schedule', false);
+//             });
+//         }
+
+//         // Helper function to show status messages
+//         function showStatus(elementId, message, isSuccess) {
+//             const statusElement = document.getElementById(elementId);
+//             statusElement.textContent = message;
+//             statusElement.className = 'status ' + (isSuccess ? 'success' : 'error');
+
+//             // Hide status message after 3 seconds
+//             setTimeout(() => {
+//                 statusElement.style.display = 'none';
+//             }, 3000);
 //         }
 //     </script>
 // </body>
@@ -619,21 +463,21 @@
 
 // #endif // HTML_ASSETS_H
 
-
+// version new
 
 #ifndef HTML_ASSETS_H
 #define HTML_ASSETS_H
 
 #include <Arduino.h>
 
-// Login HTML page - Simplified
+// Login HTML page - With simple authentication
 const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Medicine Reminder - Login</title>
+    <title>Smart Medicine Reminder</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -673,11 +517,11 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
         label {
             display: block;
             margin-bottom: 5px;
-            color: #5f6368;
             font-weight: 500;
+            color: #5f6368;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 10px;
             border: 1px solid #dadce0;
@@ -700,9 +544,15 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
         }
 
         .note {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 12px;
             color: #5f6368;
+        }
+
+        .error {
+            color: #d93025;
+            margin-top: 10px;
+            display: none;
         }
     </style>
 </head>
@@ -713,66 +563,41 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 
         <div class="form-group">
             <label for="username">Username</label>
-            <input type="text" id="username" placeholder="Enter username">
+            <input type="text" id="username" placeholder="Enter username" value="admin">
         </div>
 
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" placeholder="Enter password">
-        </div>
-
-        <div class="form-group">
-            <label for="role">Role</label>
-            <select id="role">
-                <option value="admin">Admin</option>
-                <option value="patient">Patient</option>
-                <option value="caregiver">Caregiver</option>
-            </select>
+            <input type="password" id="password" placeholder="Enter password" value="admin">
         </div>
 
         <button class="button" id="login-button">Login</button>
+
+        <div id="error-message" class="error">Invalid username or password</div>
 
         <p class="note">Default login: username "admin", password "admin"</p>
     </div>
 
     <script>
-        // Login form handling
+        // Simple login authentication
         document.getElementById('login-button').addEventListener('click', function() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
 
-            if (!username || !password) {
-                alert('Please enter username and password');
-                return;
+            if (username === 'admin' && password === 'admin') {
+                // Successful login
+                window.location.href = '/dashboard';
+            } else {
+                // Failed login
+                document.getElementById('error-message').style.display = 'block';
             }
-
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `username=${username}&password=${password}&role=${role}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.href = '/dashboard';
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred during login');
-            });
         });
     </script>
 </body>
 </html>
 )rawliteral";
 
-// Dashboard HTML page - Simplified
+// Dashboard HTML page remains the same
 const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -868,11 +693,42 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
             padding: 5px 10px;
             cursor: pointer;
         }
+
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .logout-button {
+            background-color: #f1f3f4;
+            color: #5f6368;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            float: right;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Medicine Reminder Dashboard</h1>
+        <button class="logout-button" onclick="window.location.href='/'">Logout</button>
 
         <div class="card">
             <h2>Patient Phone Number</h2>
@@ -885,6 +741,7 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
                     <button class="button" id="save-phone-button">Save</button>
                 </div>
             </div>
+            <div id="phone-status" class="status"></div>
         </div>
 
         <div class="card">
@@ -904,13 +761,56 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="time-input">Time</label>
-                    <input type="time" id="time-input">
+                    <label for="hour-select">Hour</label>
+                    <select id="hour-select">
+                        <option value="0">00</option>
+                        <option value="1">01</option>
+                        <option value="2">02</option>
+                        <option value="3">03</option>
+                        <option value="4">04</option>
+                        <option value="5">05</option>
+                        <option value="6">06</option>
+                        <option value="7">07</option>
+                        <option value="8">08</option>
+                        <option value="9">09</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                        <option value="21">21</option>
+                        <option value="22">22</option>
+                        <option value="23">23</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="minute-select">Minute</label>
+                    <select id="minute-select">
+                        <option value="0">00</option>
+                        <option value="5">05</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                        <option value="35">35</option>
+                        <option value="40">40</option>
+                        <option value="45">45</option>
+                        <option value="50">50</option>
+                        <option value="55">55</option>
+                    </select>
                 </div>
                 <div class="form-group" style="flex: 0.3; display: flex; align-items: flex-end;">
                     <button class="button" id="add-schedule-button">Add</button>
                 </div>
             </div>
+            <div id="schedule-status" class="status"></div>
 
             <h3>Current Schedules</h3>
             <table id="schedule-table">
@@ -938,13 +838,14 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 
         // Load patient phone number
         function loadPhone() {
-            fetch('/getphone')
+            fetch('/get_phone')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('patient-phone').value = data.phone;
                 })
                 .catch(error => {
                     console.error('Error loading phone:', error);
+                    showStatus('phone-status', 'Failed to load phone number', false);
                 });
         }
 
@@ -952,7 +853,7 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
         document.getElementById('save-phone-button').addEventListener('click', function() {
             const phone = document.getElementById('patient-phone').value;
 
-            fetch('/phone', {
+            fetch('/set_phone', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -962,24 +863,36 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert('Phone number saved successfully!');
+                    showStatus('phone-status', 'Phone number saved successfully!', true);
                 } else {
-                    alert('Failed to save phone number');
+                    showStatus('phone-status', 'Failed to save phone number', false);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while saving phone number');
+                showStatus('phone-status', 'An error occurred while saving phone number', false);
             });
         });
 
         // Load schedules
         function loadSchedules() {
-            fetch('/getschedule')
+            fetch('/get_schedules')
                 .then(response => response.json())
                 .then(data => {
                     const scheduleBody = document.getElementById('schedule-body');
                     scheduleBody.innerHTML = '';
+
+                    if (!data.schedules || data.schedules.length === 0) {
+                        // No schedules
+                        const row = document.createElement('tr');
+                        const cell = document.createElement('td');
+                        cell.textContent = 'No schedules found';
+                        cell.colSpan = 4;
+                        cell.style.textAlign = 'center';
+                        row.appendChild(cell);
+                        scheduleBody.appendChild(row);
+                        return;
+                    }
 
                     data.schedules.forEach((schedule, index) => {
                         const row = document.createElement('tr');
@@ -1017,80 +930,72 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
                 })
                 .catch(error => {
                     console.error('Error loading schedules:', error);
+                    showStatus('schedule-status', 'Failed to load schedules', false);
                 });
         }
 
         // Add new schedule
         document.getElementById('add-schedule-button').addEventListener('click', function() {
             const chamber = document.getElementById('chamber-select').value;
-            const timeInput = document.getElementById('time-input').value;
+            const hour = document.getElementById('hour-select').value;
+            const minute = document.getElementById('minute-select').value;
 
-            if (!timeInput) {
-                alert('Please select a time');
-                return;
-            }
-
-            const [hours, minutes] = timeInput.split(':');
-
-            // Get current schedules first
-            fetch('/getschedule')
-                .then(response => response.json())
-                .then(data => {
-                    const schedules = data.schedules || [];
-
-                    // Add new schedule
-                    schedules.push({
-                        chamber: parseInt(chamber),
-                        hour: parseInt(hours),
-                        minute: parseInt(minutes),
-                        taken: false
-                    });
-
-                    // Update schedules
-                    updateSchedules(schedules);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        });
-
-        // Remove schedule
-        function removeSchedule(index) {
-            fetch('/getschedule')
-                .then(response => response.json())
-                .then(data => {
-                    const schedules = data.schedules || [];
-                    schedules.splice(index, 1);
-                    updateSchedules(schedules);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-
-        // Update schedules on server
-        function updateSchedules(schedules) {
-            const scheduleJson = JSON.stringify({ schedules: schedules });
-
-            fetch('/schedule', {
+            fetch('/add_schedule', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `schedule=${encodeURIComponent(scheduleJson)}`
+                body: `chamber=${chamber}&hour=${hour}&minute=${minute}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    showStatus('schedule-status', 'Schedule added successfully!', true);
                     loadSchedules(); // Reload schedules
                 } else {
-                    alert('Failed to update schedules');
+                    showStatus('schedule-status', data.message || 'Failed to add schedule', false);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while updating schedules');
+                showStatus('schedule-status', 'An error occurred while adding schedule', false);
             });
+        });
+
+        // Remove schedule
+        function removeSchedule(index) {
+            fetch('/remove_schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `index=${index}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showStatus('schedule-status', 'Schedule removed successfully!', true);
+                    loadSchedules(); // Reload schedules
+                } else {
+                    showStatus('schedule-status', data.message || 'Failed to remove schedule', false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('schedule-status', 'An error occurred while removing schedule', false);
+            });
+        }
+
+        // Helper function to show status messages
+        function showStatus(elementId, message, isSuccess) {
+            const statusElement = document.getElementById(elementId);
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + (isSuccess ? 'success' : 'error');
+
+            // Hide status message after 3 seconds
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
         }
     </script>
 </body>

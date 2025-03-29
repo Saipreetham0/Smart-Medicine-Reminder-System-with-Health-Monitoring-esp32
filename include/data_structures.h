@@ -1,3 +1,47 @@
+// #ifndef DATA_STRUCTURES_H
+// #define DATA_STRUCTURES_H
+
+// #include <Arduino.h>
+
+// // Medicine Schedule Structure
+// struct MedicineSchedule {
+//   int chamberIndex;
+//   int hour;
+//   int minute;
+//   bool taken;
+//   unsigned long alarmStartTime;
+//   bool alarmActive;
+//   bool callSent;
+
+//   // Constructor with default values
+//   MedicineSchedule() :
+//     chamberIndex(0),
+//     hour(0),
+//     minute(0),
+//     taken(false),
+//     alarmStartTime(0),
+//     alarmActive(false),
+//     callSent(false) {}
+// };
+
+// // User Structure
+// struct User {
+//   String username;
+//   String password;
+//   String role;
+//   String phone;
+
+//   // Constructor with default values
+//   User() :
+//     username(""),
+//     password(""),
+//     role(""),
+//     phone("") {}
+// };
+
+// #endif // DATA_STRUCTURES_H
+
+
 #ifndef DATA_STRUCTURES_H
 #define DATA_STRUCTURES_H
 
@@ -5,13 +49,13 @@
 
 // Medicine Schedule Structure
 struct MedicineSchedule {
-  int chamberIndex;
-  int hour;
-  int minute;
-  bool taken;
-  unsigned long alarmStartTime;
-  bool alarmActive;
-  bool callSent;
+  int chamberIndex;           // Which medicine chamber (0-7)
+  int hour;                   // Hour for the schedule (0-23)
+  int minute;                 // Minute for the schedule (0-59)
+  bool taken;                 // Has the medicine been taken?
+  bool alarmActive;           // Is the alarm currently active?
+  bool callSent;              // Has a reminder call been sent?
+  unsigned long alarmStartTime; // When was the alarm activated
 
   // Constructor with default values
   MedicineSchedule() :
@@ -19,9 +63,9 @@ struct MedicineSchedule {
     hour(0),
     minute(0),
     taken(false),
-    alarmStartTime(0),
     alarmActive(false),
-    callSent(false) {}
+    callSent(false),
+    alarmStartTime(0) {}
 };
 
 // User Structure
