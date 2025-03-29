@@ -1,0 +1,764 @@
+#include <Arduino.h>  // This includes WString.h and other Arduino basics
+#include <Wire.h>
+#include <HardwareSerial.h>
+#include <RTClib.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <SPIFFS.h>
+
+// Pin Definitions
+#define SDA_PIN                21
+#define SCL_PIN                22
+#define RX_PIN                 16
+#define TX_PIN                 17
+#define REED_SWITCH_1          13
+#define REED_SWITCH_2          12
+#define REED_SWITCH_3          14
+#define REED_SWITCH_4          27
+#define REED_SWITCH_5          26
+#define REED_SWITCH_6          25
+#define REED_SWITCH_7          33
+#define REED_SWITCH_8          32
+#define LED_PIN_1              5
+#define LED_PIN_2              18
+#define LED_PIN_3              19
+#define LED_PIN_4              23
+#define LED_PIN_5              2
+#define LED_PIN_6              4
+#define LED_PIN_7              0
+#define LED_PIN_8              15
+#define BUZZER_PIN             5
+
+// Constants
+#define CALL_DELAY             300000  // 5 minutes in milliseconds
+#define BAUD_RATE              115200
+#define ALARM_DURATION         60000   // 1 minute in milliseconds
+
+// WiFi and WebServer Settings
+const char* ssid = "Medicine_Reminder_Point";
+const char* password = "medicine123";
+const int webPort = 80;
+
+// User credentials (in a real application, these would be stored securely)
+const char* validUsername = "admin";
+const char* validPassword = "password";
+const char* patientUsername = "patient";
+const char* patientPassword = "patient123";
+
+// Global Objects
+RTC_DS3231 rtc;
+HardwareSerial gsmSerial(1); // Use Hardware Serial port 1 for ESP32
+WebServer server(webPort);
+
+// Global Variables
+String patientPhone = "";
+unsigned long alarmStartTime = 0;
+bool alarmActive = false;
+int currentMedicineBox = 0;
+bool isAuthenticated = false;  // Track if user is logged in
+
+// Medicine schedule struct
+struct MedicineSchedule {
+  int day;
+  int hour;
+  int minute;
+  int boxNumber;
+  bool taken;
+};
+
+// Array to store medicine schedules
+MedicineSchedule medicineSchedules[20];
+int scheduleCount = 0;
+
+// Function Prototypes
+void setupWiFi();
+void setupWebServer();
+void handleRoot();
+void handleLogin();
+void handleLogout();
+void handleDashboard();
+void handleScheduleUpdate();
+void checkScheduledMedicine();
+void activateAlarm(int boxNumber);
+void makePhoneCall();
+void checkMedicineBoxes();
+void setupRTC();
+void setupLEDs();
+void setupReedSwitches();
+void setupBuzzer();
+void setupGSM();
+void triggerVoiceReminder();
+String getCurrentDay();
+String getCurrentHour();
+String getCurrentMinute();
+void saveSchedulesToSPIFFS();
+void loadSchedulesFromSPIFFS();
+
+void setup() {
+  Serial.begin(BAUD_RATE);
+
+  Wire.begin(SDA_PIN, SCL_PIN);
+
+  setupRTC();
+  setupGSM();
+  setupLEDs();
+  setupReedSwitches();
+  setupBuzzer();
+  setupWiFi();
+
+  SPIFFS.begin(true);
+
+  // Load saved schedules
+  loadSchedulesFromSPIFFS();
+
+  // Setup web server after SPIFFS is initialized
+  setupWebServer();
+
+  Serial.println("Smart Medicine Reminder Kit initialized!");
+}
+
+void loop() {
+  server.handleClient();
+
+  // Check if it's time for medication
+  checkScheduledMedicine();
+
+  // Check if medicine boxes are opened
+  checkMedicineBoxes();
+
+  delay(100);
+}
+
+void setupRTC() {
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, setting the time!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  Serial.println("RTC initialized");
+}
+
+void setupGSM() {
+  gsmSerial.begin(BAUD_RATE, SERIAL_8N1, RX_PIN, TX_PIN);
+
+  // Initialize GSM module with direct AT commands
+  Serial.println("Initializing GSM module...");
+
+  // Basic AT command test
+  gsmSerial.println("AT");
+  delay(1000);
+
+  // Set SMS text mode
+  gsmSerial.println("AT+CMGF=1");
+  delay(1000);
+
+  // Set GSM module to full functionality
+  gsmSerial.println("AT+CFUN=1");
+  delay(3000);
+
+  Serial.println("GSM module initialized");
+}
+
+void setupLEDs() {
+  pinMode(LED_PIN_1, OUTPUT);
+  pinMode(LED_PIN_2, OUTPUT);
+  pinMode(LED_PIN_3, OUTPUT);
+  pinMode(LED_PIN_4, OUTPUT);
+  pinMode(LED_PIN_5, OUTPUT);
+  pinMode(LED_PIN_6, OUTPUT);
+  pinMode(LED_PIN_7, OUTPUT);
+  pinMode(LED_PIN_8, OUTPUT);
+
+  digitalWrite(LED_PIN_1, LOW);
+  digitalWrite(LED_PIN_2, LOW);
+  digitalWrite(LED_PIN_3, LOW);
+  digitalWrite(LED_PIN_4, LOW);
+  digitalWrite(LED_PIN_5, LOW);
+  digitalWrite(LED_PIN_6, LOW);
+  digitalWrite(LED_PIN_7, LOW);
+  digitalWrite(LED_PIN_8, LOW);
+
+  Serial.println("LEDs initialized");
+}
+
+void setupReedSwitches() {
+  pinMode(REED_SWITCH_1, INPUT_PULLUP);
+  pinMode(REED_SWITCH_2, INPUT_PULLUP);
+  pinMode(REED_SWITCH_3, INPUT_PULLUP);
+  pinMode(REED_SWITCH_4, INPUT_PULLUP);
+  pinMode(REED_SWITCH_5, INPUT_PULLUP);
+  pinMode(REED_SWITCH_6, INPUT_PULLUP);
+  pinMode(REED_SWITCH_7, INPUT_PULLUP);
+  pinMode(REED_SWITCH_8, INPUT_PULLUP);
+
+  Serial.println("Reed switches initialized");
+}
+
+void setupBuzzer() {
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+  Serial.println("Buzzer initialized");
+}
+
+void setupWiFi() {
+  Serial.print("Setting up AP Mode...");
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
+
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+}
+
+void setupWebServer() {
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/login", HTTP_POST, handleLogin);
+  server.on("/dashboard", HTTP_GET, handleDashboard);
+  server.on("/schedule", HTTP_POST, handleScheduleUpdate);
+  server.on("/logout", HTTP_GET, handleLogout);
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void handleRoot() {
+  String html = "<!DOCTYPE html><html><head><title>Smart Medicine Reminder</title>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<style>";
+  html += "body {font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f8ff;}";
+  html += ".container {max-width: 400px; margin: 50px auto; background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}";
+  html += "h1 {color: #1e88e5; text-align: center; margin-bottom: 10px;}";
+  html += "h2 {color: #555; text-align: center; font-size: 1rem; font-weight: normal; margin-top: 0; margin-bottom: 30px;}";
+  html += ".tabs {display: flex; margin-bottom: 20px;}";
+  html += ".tab {flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #1e88e5; border-bottom: 2px solid #ddd;}";
+  html += ".tab.active {border-bottom: 2px solid #1e88e5; font-weight: bold;}";
+  html += ".form-group {margin-bottom: 15px;}";
+  html += "label {display: block; margin-bottom: 5px; color: #555;}";
+  html += "input[type=text], input[type=password], select {width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;}";
+  html += "button {width: 100%; background-color: #1e88e5; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;}";
+  html += "button:hover {background-color: #1976d2;}";
+  html += "select {appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\"black\" height=\"24\" viewBox=\"0 0 24 24\" width=\"24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M7 10l5 5 5-5z\"/><path d=\"M0 0h24v24H0z\" fill=\"none\"/></svg>'); background-repeat: no-repeat; background-position: right 10px center;}";
+  html += "</style></head><body>";
+  html += "<div class='container'>";
+  html += "<h1>Smart Medicine Reminder</h1>";
+  html += "<h2>Health Monitoring System for Senior Citizens</h2>";
+
+  html += "<div class='tabs'>";
+  html += "<div class='tab active' onclick='switchTab(\"login\")'>Login</div>";
+  html += "<div class='tab' onclick='switchTab(\"signup\")'>Sign Up</div>";
+  html += "</div>";
+
+  html += "<form id='loginForm' action='/login' method='post'>";
+  html += "<div class='form-group'>";
+  html += "<label for='username'>Username</label>";
+  html += "<input type='text' id='username' name='username' placeholder='Enter username' required>";
+  html += "</div>";
+
+  html += "<div class='form-group'>";
+  html += "<label for='password'>Password</label>";
+  html += "<input type='password' id='password' name='password' placeholder='Enter password' required>";
+  html += "</div>";
+
+  html += "<div class='form-group'>";
+  html += "<label for='role'>Role</label>";
+  html += "<select id='role' name='role'>";
+  html += "<option value=''>Select role</option>";
+  html += "<option value='admin'>Administrator</option>";
+  html += "<option value='patient'>Patient</option>";
+  html += "</select>";
+  html += "</div>";
+
+  html += "<button type='submit'>Login</button>";
+  html += "</form>";
+
+  html += "<form id='signupForm' action='/signup' method='post' style='display:none;'>";
+  html += "<div class='form-group'>";
+  html += "<label for='newUsername'>Username</label>";
+  html += "<input type='text' id='newUsername' name='newUsername' placeholder='Choose username' required>";
+  html += "</div>";
+
+  html += "<div class='form-group'>";
+  html += "<label for='newPassword'>Password</label>";
+  html += "<input type='password' id='newPassword' name='newPassword' placeholder='Choose password' required>";
+  html += "</div>";
+
+  html += "<div class='form-group'>";
+  html += "<label for='confirmPassword'>Confirm Password</label>";
+  html += "<input type='password' id='confirmPassword' name='confirmPassword' placeholder='Confirm password' required>";
+  html += "</div>";
+
+  html += "<div class='form-group'>";
+  html += "<label for='newRole'>Role</label>";
+  html += "<select id='newRole' name='newRole'>";
+  html += "<option value=''>Select role</option>";
+  html += "<option value='admin'>Administrator</option>";
+  html += "<option value='patient'>Patient</option>";
+  html += "</select>";
+  html += "</div>";
+
+  html += "<button type='submit'>Sign Up</button>";
+  html += "</form>";
+
+  html += "</div>"; // container
+
+  html += "<script>";
+  html += "function switchTab(tab) {";
+  html += "  const loginForm = document.getElementById('loginForm');";
+  html += "  const signupForm = document.getElementById('signupForm');";
+  html += "  const tabs = document.getElementsByClassName('tab');";
+
+  html += "  if (tab === 'login') {";
+  html += "    loginForm.style.display = 'block';";
+  html += "    signupForm.style.display = 'none';";
+  html += "    tabs[0].className = 'tab active';";
+  html += "    tabs[1].className = 'tab';";
+  html += "  } else {";
+  html += "    loginForm.style.display = 'none';";
+  html += "    signupForm.style.display = 'block';";
+  html += "    tabs[0].className = 'tab';";
+  html += "    tabs[1].className = 'tab active';";
+  html += "  }";
+  html += "}";
+  html += "</script>";
+
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+void handleLogin() {
+  String username = server.arg("username");
+  String password = server.arg("password");
+  String role = server.arg("role");
+
+  // Simple authentication
+  bool authSuccess = false;
+  if (role == "admin" && username == validUsername && password == validPassword) {
+    authSuccess = true;
+  } else if (role == "patient" && username == patientUsername && password == patientPassword) {
+    authSuccess = true;
+  }
+
+  if (authSuccess) {
+    isAuthenticated = true;
+    // Redirect to dashboard
+    server.sendHeader("Location", "/dashboard");
+    server.send(302, "text/plain", "");
+  } else {
+    // Authentication failed, redirect back to login
+    server.sendHeader("Location", "/");
+    server.send(302, "text/plain", "");
+  }
+}
+
+void handleLogout() {
+  isAuthenticated = false;
+  server.sendHeader("Location", "/");
+  server.send(302, "text/plain", "");
+}
+
+void handleDashboard() {
+  if (!isAuthenticated) {
+    server.sendHeader("Location", "/");
+    server.send(302, "text/plain", "");
+    return;
+  }
+
+  String html = "<!DOCTYPE html><html><head><title>Medicine Reminder Dashboard</title>";
+  html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
+  html += "<style>";
+  html += "body {font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f8ff;}";
+  html += ".container {max-width: 800px; margin: 20px auto; background-color: white; border-radius: 10px; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}";
+  html += "h1 {color: #1e88e5; text-align: center; margin-bottom: 10px;}";
+  html += "h2 {color: #555; text-align: center; font-size: 1rem; font-weight: normal; margin-top: 0; margin-bottom: 20px;}";
+  html += ".header {display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}";
+  html += ".logout {background: none; border: none; color: #1e88e5; cursor: pointer; text-decoration: underline;}";
+  html += ".boxes {display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;}";
+  html += ".box {border: 1px solid #ddd; border-radius: 8px; padding: 15px; background-color: #f9f9f9;}";
+  html += ".box h3 {margin-top: 0; color: #1e88e5; border-bottom: 1px solid #ddd; padding-bottom: 10px;}";
+  html += ".form-group {margin-bottom: 15px;}";
+  html += "label {display: block; margin-bottom: 5px; color: #555;}";
+  html += "input, select {width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;}";
+  html += ".time-inputs {display: flex; gap: 10px;}";
+  html += ".time-inputs select {flex: 1;}";
+  html += "button {width: 100%; background-color: #1e88e5; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;}";
+  html += "button:hover {background-color: #1976d2;}";
+  html += ".phone-setup {grid-column: 1 / -1; background-color: #e8f5e9; border: 1px solid #a5d6a7;}";
+  html += ".status {margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 8px; text-align: center;}";
+  html += ".schedule-list {margin-top: 30px;}";
+  html += "table {width: 100%; border-collapse: collapse;}";
+  html += "th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}";
+  html += "th {background-color: #f2f2f2;}";
+  html += "tr:nth-child(even) {background-color: #f9f9f9;}";
+  html += "</style></head><body>";
+
+  html += "<div class='container'>";
+  html += "<div class='header'>";
+  html += "<h1>Medicine Reminder Dashboard</h1>";
+  html += "<a href='/logout' class='logout'>Logout</a>";
+  html += "</div>";
+  html += "<h2>Configure medication schedules for all boxes</h2>";
+
+  html += "<div class='boxes'>";
+
+  // Create 8 medicine boxes
+  for (int i = 1; i <= 8; i++) {
+    html += "<div class='box'>";
+    html += "<h3>Medicine Box " + String(i) + "</h3>";
+    html += "<form action='/schedule' method='post'>";
+    html += "<input type='hidden' name='box' value='" + String(i) + "'>";
+
+    html += "<div class='form-group'>";
+    html += "<label for='day" + String(i) + "'>Day:</label>";
+    html += "<select id='day" + String(i) + "' name='day'>";
+    html += "<option value='1'>Monday</option>";
+    html += "<option value='2'>Tuesday</option>";
+    html += "<option value='3'>Wednesday</option>";
+    html += "<option value='4'>Thursday</option>";
+    html += "<option value='5'>Friday</option>";
+    html += "<option value='6'>Saturday</option>";
+    html += "<option value='0'>Sunday</option>";
+    html += "</select>";
+    html += "</div>";
+
+    html += "<div class='form-group'>";
+    html += "<label>Time:</label>";
+    html += "<div class='time-inputs'>";
+
+    // Hours dropdown
+    html += "<select name='hour'>";
+    for (int h = 0; h < 24; h++) {
+      html += "<option value='" + String(h) + "'>" + (h < 10 ? "0" : "") + String(h) + "</option>";
+    }
+    html += "</select>";
+
+    // Minutes dropdown
+    html += "<select name='minute'>";
+    for (int m = 0; m < 60; m += 5) {
+      html += "<option value='" + String(m) + "'>" + (m < 10 ? "0" : "") + String(m) + "</option>";
+    }
+    html += "</select>";
+    html += "</div>"; // time-inputs
+    html += "</div>"; // form-group
+
+    html += "<button type='submit'>Set Schedule</button>";
+    html += "</form>";
+    html += "</div>"; // box
+  }
+
+  // Phone number setup
+  html += "<div class='box phone-setup'>";
+  html += "<h3>Patient Phone Number</h3>";
+  html += "<form action='/schedule' method='post'>";
+  html += "<input type='hidden' name='setPhone' value='true'>";
+  html += "<div class='form-group'>";
+  html += "<label for='phone'>Phone (with country code):</label>";
+  html += "<input type='text' id='phone' name='phone' placeholder='+8801XXXXXXXXX' value='" + patientPhone + "'>";
+  html += "</div>";
+  html += "<button type='submit'>Update Phone Number</button>";
+  html += "</form>";
+  html += "</div>"; // phone-setup
+
+  html += "</div>"; // boxes
+
+  // Current schedules list
+  html += "<div class='schedule-list'>";
+  html += "<h3>Current Medication Schedules</h3>";
+  html += "<table>";
+  html += "<tr><th>Box</th><th>Day</th><th>Time</th><th>Status</th></tr>";
+
+  // Show all scheduled medications
+  for (int i = 0; i < scheduleCount; i++) {
+    String day;
+    switch (medicineSchedules[i].day) {
+      case 0: day = "Sunday"; break;
+      case 1: day = "Monday"; break;
+      case 2: day = "Tuesday"; break;
+      case 3: day = "Wednesday"; break;
+      case 4: day = "Thursday"; break;
+      case 5: day = "Friday"; break;
+      case 6: day = "Saturday"; break;
+      default: day = "Unknown";
+    }
+
+    String time = (medicineSchedules[i].hour < 10 ? "0" : "") + String(medicineSchedules[i].hour) + ":" +
+                 (medicineSchedules[i].minute < 10 ? "0" : "") + String(medicineSchedules[i].minute);
+
+    String status = medicineSchedules[i].taken ? "Taken" : "Pending";
+
+    html += "<tr>";
+    html += "<td>Box " + String(medicineSchedules[i].boxNumber) + "</td>";
+    html += "<td>" + day + "</td>";
+    html += "<td>" + time + "</td>";
+    html += "<td>" + status + "</td>";
+    html += "</tr>";
+  }
+
+  html += "</table>";
+  html += "</div>"; // schedule-list
+
+  html += "<div class='status'>";
+  html += "Current time: " + getCurrentDay() + " " + getCurrentHour() + ":" + getCurrentMinute();
+  html += "<br>System status: Online";
+  html += "</div>";
+
+  html += "</div>"; // container
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+void handleScheduleUpdate() {
+  if (server.hasArg("setPhone")) {
+    patientPhone = server.arg("phone");
+    server.send(200, "text/plain", "Phone number set to: " + patientPhone);
+    return;
+  }
+
+  if (server.hasArg("box") && server.hasArg("day") && server.hasArg("hour") && server.hasArg("minute")) {
+    int box = server.arg("box").toInt();
+    int day = server.arg("day").toInt();
+    int hour = server.arg("hour").toInt();
+    int minute = server.arg("minute").toInt();
+
+    if (scheduleCount < 20) {
+      medicineSchedules[scheduleCount].day = day;
+      medicineSchedules[scheduleCount].hour = hour;
+      medicineSchedules[scheduleCount].minute = minute;
+      medicineSchedules[scheduleCount].boxNumber = box;
+      medicineSchedules[scheduleCount].taken = false;
+      scheduleCount++;
+
+      // Save to SPIFFS
+      saveSchedulesToSPIFFS();
+
+      server.sendHeader("Location", "/dashboard");
+      server.send(302, "text/plain", "");
+    } else {
+      server.send(400, "text/plain", "Maximum schedule count reached");
+    }
+  } else {
+    server.send(400, "text/plain", "Missing parameters");
+  }
+}
+
+String getCurrentDay() {
+  DateTime now = rtc.now();
+  int day = now.dayOfTheWeek();
+
+  switch (day) {
+    case 0: return "Sunday";
+    case 1: return "Monday";
+    case 2: return "Tuesday";
+    case 3: return "Wednesday";
+    case 4: return "Thursday";
+    case 5: return "Friday";
+    case 6: return "Saturday";
+    default: return "Unknown";
+  }
+}
+
+String getCurrentHour() {
+  DateTime now = rtc.now();
+  if (now.hour() < 10) {
+    return "0" + String(now.hour());
+  }
+  return String(now.hour());
+}
+
+String getCurrentMinute() {
+  DateTime now = rtc.now();
+  if (now.minute() < 10) {
+    return "0" + String(now.minute());
+  }
+  return String(now.minute());
+}
+
+void saveSchedulesToSPIFFS() {
+  File file = SPIFFS.open("/schedules.txt", FILE_WRITE);
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  for (int i = 0; i < scheduleCount; i++) {
+    file.println(String(medicineSchedules[i].day) + "," +
+                 String(medicineSchedules[i].hour) + "," +
+                 String(medicineSchedules[i].minute) + "," +
+                 String(medicineSchedules[i].boxNumber) + "," +
+                 String(medicineSchedules[i].taken ? 1 : 0));
+  }
+
+  file.close();
+  Serial.println("Schedules saved to SPIFFS");
+}
+
+void loadSchedulesFromSPIFFS() {
+  File file = SPIFFS.open("/schedules.txt", FILE_READ);
+  if (!file) {
+    Serial.println("No saved schedules found");
+    return;
+  }
+
+  scheduleCount = 0;
+
+  while (file.available() && scheduleCount < 20) {
+    String line = file.readStringUntil('\n');
+
+    // Parse the line
+    int commaIndex1 = line.indexOf(',');
+    int commaIndex2 = line.indexOf(',', commaIndex1 + 1);
+    int commaIndex3 = line.indexOf(',', commaIndex2 + 1);
+    int commaIndex4 = line.indexOf(',', commaIndex3 + 1);
+
+    if (commaIndex1 != -1 && commaIndex2 != -1 && commaIndex3 != -1 && commaIndex4 != -1) {
+      medicineSchedules[scheduleCount].day = line.substring(0, commaIndex1).toInt();
+      medicineSchedules[scheduleCount].hour = line.substring(commaIndex1 + 1, commaIndex2).toInt();
+      medicineSchedules[scheduleCount].minute = line.substring(commaIndex2 + 1, commaIndex3).toInt();
+      medicineSchedules[scheduleCount].boxNumber = line.substring(commaIndex3 + 1, commaIndex4).toInt();
+      medicineSchedules[scheduleCount].taken = (line.substring(commaIndex4 + 1).toInt() == 1);
+      scheduleCount++;
+    }
+  }
+
+  file.close();
+  Serial.println("Loaded " + String(scheduleCount) + " schedules from SPIFFS");
+}
+
+void checkScheduledMedicine() {
+  if (alarmActive) {
+    // Check if alarm has been active for too long
+    if (millis() - alarmStartTime > ALARM_DURATION) {
+      // Make phone call if medicine not taken
+      if (currentMedicineBox != 0) {
+        makePhoneCall();
+      }
+
+      // Turn off alarm
+      digitalWrite(BUZZER_PIN, LOW);
+      alarmActive = false;
+    }
+    return;
+  }
+
+  DateTime now = rtc.now();
+  int currentDay = now.dayOfTheWeek();
+  int currentHour = now.hour();
+  int currentMinute = now.minute();
+
+  for (int i = 0; i < scheduleCount; i++) {
+    if (!medicineSchedules[i].taken &&
+        medicineSchedules[i].day == currentDay &&
+        medicineSchedules[i].hour == currentHour &&
+        medicineSchedules[i].minute == currentMinute) {
+
+      // Activate alarm for this medicine box
+      activateAlarm(medicineSchedules[i].boxNumber);
+      break;
+    }
+  }
+}
+
+void activateAlarm(int boxNumber) {
+  currentMedicineBox = boxNumber;
+  alarmActive = true;
+  alarmStartTime = millis();
+
+  // Turn on LED for the specific box
+  switch (boxNumber) {
+    case 1: digitalWrite(LED_PIN_1, HIGH); break;
+    case 2: digitalWrite(LED_PIN_2, HIGH); break;
+    case 3: digitalWrite(LED_PIN_3, HIGH); break;
+    case 4: digitalWrite(LED_PIN_4, HIGH); break;
+    case 5: digitalWrite(LED_PIN_5, HIGH); break;
+    case 6: digitalWrite(LED_PIN_6, HIGH); break;
+    case 7: digitalWrite(LED_PIN_7, HIGH); break;
+    case 8: digitalWrite(LED_PIN_8, HIGH); break;
+  }
+
+  // Activate buzzer
+  digitalWrite(BUZZER_PIN, HIGH);
+
+  // Trigger voice reminder
+  triggerVoiceReminder();
+
+  Serial.println("Alarm activated for box " + String(boxNumber));
+}
+
+void makePhoneCall() {
+  if (patientPhone.length() > 0) {
+    Serial.println("Making phone call to " + patientPhone);
+
+    // AT commands for making a call with GSM module
+    gsmSerial.println("AT");
+    delay(1000);
+    gsmSerial.println("ATD" + patientPhone + ";"); // The semicolon is important for voice calls
+
+    delay(20000);  // Wait 20 seconds for call
+
+    // AT command to hang up
+    gsmSerial.println("ATH");
+    delay(1000);
+  } else {
+    Serial.println("No patient phone number set");
+  }
+}
+
+void triggerVoiceReminder() {
+  // Voice reminder functionality (simplified)
+  Serial.println("Voice reminder would be triggered here");
+}
+
+void checkMedicineBoxes() {
+  if (currentMedicineBox == 0) {
+    return;
+  }
+
+  bool boxOpened = false;
+
+  // Check if the current medicine box has been opened
+  switch (currentMedicineBox) {
+    case 1: boxOpened = !digitalRead(REED_SWITCH_1); break;
+    case 2: boxOpened = !digitalRead(REED_SWITCH_2); break;
+    case 3: boxOpened = !digitalRead(REED_SWITCH_3); break;
+    case 4: boxOpened = !digitalRead(REED_SWITCH_4); break;
+    case 5: boxOpened = !digitalRead(REED_SWITCH_5); break;
+    case 6: boxOpened = !digitalRead(REED_SWITCH_6); break;
+    case 7: boxOpened = !digitalRead(REED_SWITCH_7); break;
+    case 8: boxOpened = !digitalRead(REED_SWITCH_8); break;
+  }
+
+  if (boxOpened) {
+    // Mark medicine as taken
+    for (int i = 0; i < scheduleCount; i++) {
+      if (medicineSchedules[i].boxNumber == currentMedicineBox && !medicineSchedules[i].taken) {
+        medicineSchedules[i].taken = true;
+        saveSchedulesToSPIFFS();
+        break;
+      }
+    }
+
+    // Turn off LED for the specific box
+    switch (currentMedicineBox) {
+      case 1: digitalWrite(LED_PIN_1, LOW); break;
+      case 2: digitalWrite(LED_PIN_2, LOW); break;
+      case 3: digitalWrite(LED_PIN_3, LOW); break;
+      case 4: digitalWrite(LED_PIN_4, LOW); break;
+      case 5: digitalWrite(LED_PIN_5, LOW); break;
+      case 6: digitalWrite(LED_PIN_6, LOW); break;
+      case 7: digitalWrite(LED_PIN_7, LOW); break;
+      case 8: digitalWrite(LED_PIN_8, LOW); break;
+    }
+
+    // Turn off buzzer
+    digitalWrite(BUZZER_PIN, LOW);
+
+    alarmActive = false;
+    currentMedicineBox = 0;
+
+    Serial.println("Medicine taken from box");
+  }
+}

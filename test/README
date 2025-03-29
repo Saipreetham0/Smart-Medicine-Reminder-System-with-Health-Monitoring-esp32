@@ -1,0 +1,72 @@
+# Smart Medicine Reminder Kit
+
+A comprehensive ESP32-based system for medication management and health monitoring, designed especially for senior citizens.
+
+## Features
+
+- **Medication Scheduling**: Set up medication schedules with specific times for each medicine chamber
+- **Medicine Box Indicator**: LEDs indicate which medicine should be taken at the scheduled time
+- **Missed Medication Alerts**: Automatic phone call reminders if medicine is not taken within 5 minutes
+- **User Authentication**: Multi-user support with different roles (patient, caregiver, doctor)
+- **Web Interface**: Easy-to-use interface for managing medication schedules and settings
+- **Real-time Clock**: Accurate timekeeping even during power outages
+- **Reed Switch Detection**: Monitors when medicine chambers are opened
+
+## Hardware Requirements
+
+- ESP32 Development Board
+- DS3231 RTC Module
+- GSM SIM900A Module
+- 8x LEDs for medicine chambers
+- Reed switch for medicine box detection
+- Buzzer for local alerts
+- 5V power supply
+
+## Pin Configuration
+
+- **LED Pins**: 13, 12, 14, 27, 26, 25, 33, 32
+- **Reed Switch Pin**: 19
+- **Buzzer Pin**: 5
+- **GSM Module**: RX=3, TX=1
+
+## Setup Instructions
+
+1. Install PlatformIO IDE (VS Code extension)
+2. Clone this repository
+3. Open the project in PlatformIO
+4. Install the required libraries through platformio.ini
+5. Connect hardware components according to the pin configuration
+6. Upload the code to your ESP32
+7. Connect to the "Medicine Reminder Point" WiFi network (password: MedReminder123)
+8. Access the web interface at 192.168.4.1
+9. Create an account or use the default admin account (username: admin, password: admin123)
+10. Configure medication schedules and patient phone number
+
+## Usage
+
+1. **Setting Up Medication Schedules**:
+   - Log in to the web interface
+   - Add medication schedules by selecting the chamber and time
+   - Enter the patient's phone number for reminders
+
+2. **Taking Medication**:
+   - At the scheduled time, the corresponding LED will light up
+   - A buzzer will sound for 30 seconds
+   - If the medicine is not taken within 5 minutes, a call will be made to the registered phone number
+
+3. **Managing Users**:
+   - Create caregiver accounts for family members
+   - Create doctor accounts for healthcare providers
+
+## Development
+
+This project is built with PlatformIO and uses the following libraries:
+
+- ESPAsyncWebServer for the web interface
+- RTClib for the real-time clock
+- ArduinoJson for JSON parsing and generation
+- LittleFS for file system operations
+
+## License
+
+This project is open source and available under the MIT License.
