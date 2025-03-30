@@ -5,7 +5,7 @@
 
 // #include <Arduino.h>
 
-// // Login HTML page - Super simple
+// // Login HTML page - With simple authentication
 // const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 // <!DOCTYPE html>
 // <html lang="en">
@@ -44,6 +44,27 @@
 //             margin-bottom: 30px;
 //         }
 
+//         .form-group {
+//             margin-bottom: 15px;
+//             text-align: left;
+//         }
+
+//         label {
+//             display: block;
+//             margin-bottom: 5px;
+//             font-weight: 500;
+//             color: #5f6368;
+//         }
+
+//         input {
+//             width: 100%;
+//             padding: 10px;
+//             border: 1px solid #dadce0;
+//             border-radius: 4px;
+//             box-sizing: border-box;
+//             font-size: 14px;
+//         }
+
 //         .button {
 //             background-color: #1a73e8;
 //             color: white;
@@ -56,19 +77,62 @@
 //             margin-top: 10px;
 //             font-weight: 500;
 //         }
+
+//         .note {
+//             margin-top: 15px;
+//             font-size: 12px;
+//             color: #5f6368;
+//         }
+
+//         .error {
+//             color: #d93025;
+//             margin-top: 10px;
+//             display: none;
+//         }
 //     </style>
 // </head>
 // <body>
 //     <div class="card">
 //         <h1>Smart Medicine Reminder</h1>
 //         <p class="subtitle">Health Monitoring System for Senior Citizens</p>
-//         <button class="button" onclick="window.location.href='/dashboard'">Enter Dashboard</button>
+
+//         <div class="form-group">
+//             <label for="username">Username</label>
+//             <input type="text" id="username" placeholder="Enter username" value="admin">
+//         </div>
+
+//         <div class="form-group">
+//             <label for="password">Password</label>
+//             <input type="password" id="password" placeholder="Enter password" value="admin">
+//         </div>
+
+//         <button class="button" id="login-button">Login</button>
+
+//         <div id="error-message" class="error">Invalid username or password</div>
+
+//         <p class="note">Default login: username "admin", password "admin"</p>
 //     </div>
+
+//     <script>
+//         // Simple login authentication
+//         document.getElementById('login-button').addEventListener('click', function() {
+//             const username = document.getElementById('username').value;
+//             const password = document.getElementById('password').value;
+
+//             if (username === 'admin' && password === 'admin') {
+//                 // Successful login
+//                 window.location.href = '/dashboard';
+//             } else {
+//                 // Failed login
+//                 document.getElementById('error-message').style.display = 'block';
+//             }
+//         });
+//     </script>
 // </body>
 // </html>
 // )rawliteral";
 
-// // Dashboard HTML page - Simplified
+// // Dashboard HTML page remains the same
 // const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 // <!DOCTYPE html>
 // <html lang="en">
@@ -183,11 +247,23 @@
 //             color: #721c24;
 //             display: block;
 //         }
+
+//         .logout-button {
+//             background-color: #f1f3f4;
+//             color: #5f6368;
+//             border: none;
+//             border-radius: 4px;
+//             padding: 8px 15px;
+//             cursor: pointer;
+//             float: right;
+//             margin-top: 10px;
+//         }
 //     </style>
 // </head>
 // <body>
 //     <div class="container">
 //         <h1>Medicine Reminder Dashboard</h1>
+//         <button class="logout-button" onclick="window.location.href='/'">Logout</button>
 
 //         <div class="card">
 //             <h2>Patient Phone Number</h2>
@@ -463,21 +539,21 @@
 
 // #endif // HTML_ASSETS_H
 
-// version new
+
 
 #ifndef HTML_ASSETS_H
 #define HTML_ASSETS_H
 
 #include <Arduino.h>
 
-// Login HTML page - With simple authentication
+// Login HTML page
 const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Medicine Reminder</title>
+    <title>Smart Medicine Reminder - Login</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -554,6 +630,12 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
             margin-top: 10px;
             display: none;
         }
+
+        .clock {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #5f6368;
+        }
     </style>
 </head>
 <body>
@@ -576,9 +658,33 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
         <div id="error-message" class="error">Invalid username or password</div>
 
         <p class="note">Default login: username "admin", password "admin"</p>
+
+        <div class="clock">
+            <div>Time: <span id="current-time">--:--:--</span></div>
+            <div>Date: <span id="current-date">----/--/--</span></div>
+        </div>
     </div>
 
     <script>
+        // Update clock
+        function updateClock() {
+            fetch('/get_time')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-time').textContent = data.time;
+                    document.getElementById('current-date').textContent = data.date;
+                })
+                .catch(error => {
+                    console.error('Error fetching time:', error);
+                });
+        }
+
+        // Update clock every second
+        setInterval(updateClock, 1000);
+
+        // Initial update
+        updateClock();
+
         // Simple login authentication
         document.getElementById('login-button').addEventListener('click', function() {
             const username = document.getElementById('username').value;
@@ -597,7 +703,7 @@ const char LOGIN_HTML[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-// Dashboard HTML page remains the same
+// Dashboard HTML page with real-time clock
 const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -723,12 +829,36 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
             float: right;
             margin-top: 10px;
         }
+
+        .clock-card {
+            background-color: #1a73e8;
+            color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .clock {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .date {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Medicine Reminder Dashboard</h1>
         <button class="logout-button" onclick="window.location.href='/'">Logout</button>
+
+        <div class="clock-card">
+            <div class="clock" id="current-time">--:--:--</div>
+            <div class="date" id="current-date">----/--/--</div>
+        </div>
 
         <div class="card">
             <h2>Patient Phone Number</h2>
@@ -830,10 +960,27 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
     </div>
 
     <script>
+        // Update clock
+        function updateClock() {
+            fetch('/get_time')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('current-time').textContent = data.time;
+                    document.getElementById('current-date').textContent = data.date;
+                })
+                .catch(error => {
+                    console.error('Error fetching time:', error);
+                });
+        }
+
+        // Update clock every second
+        setInterval(updateClock, 1000);
+
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadPhone();
             loadSchedules();
+            updateClock(); // Initial clock update
         });
 
         // Load patient phone number
