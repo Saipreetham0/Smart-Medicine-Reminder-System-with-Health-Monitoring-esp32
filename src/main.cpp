@@ -60,8 +60,8 @@ int g_currentSecond = 0;
 int g_currentDay = 1;
 int g_currentMonth = 1;
 int g_currentYear = 2023;
-String g_currentTimeString = "00:00:00";
-String g_currentDateString = "2023-01-01";
+String g_currentTimeString = "02:15:00";
+String g_currentDateString = "2025-05-03";
 
 // Function declarations
 void checkSchedules();
@@ -75,6 +75,8 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n\nStarting Smart Medicine Reminder Kit...");
+  gsm.begin(); // defaults to 9600 baud
+
 
   // Initialize pins
   for (int i = 0; i < NUM_CHAMBERS; i++) {
@@ -127,6 +129,11 @@ void setup() {
       break;
     }
     delay(200);
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, setting time to compile time");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
 
   if (!rtcFound) {
