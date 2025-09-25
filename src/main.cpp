@@ -25,6 +25,8 @@
 #define LED_6 25
 #define LED_7 33
 #define LED_8 32
+// Array of LED pins for the chambers
+
 const int LED_PINS[] = {LED_1, LED_2, LED_3, LED_4, LED_5, LED_6, LED_7, LED_8};
 const int NUM_CHAMBERS = 8;
 
