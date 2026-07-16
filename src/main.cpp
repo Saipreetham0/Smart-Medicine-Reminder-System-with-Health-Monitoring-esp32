@@ -41,8 +41,8 @@ const int NUM_CHAMBERS = 8;
 #define GSM_TX 17
 
 // WiFi Access Point Settings
-const char* ssid = "Medicine Reminder";
-const char* password = "medkit123";
+const char* ssid = "your-wifi-ssid";
+const char* password = "your-wifi-password";
 
 // Web Server
 AsyncWebServer server(80);
