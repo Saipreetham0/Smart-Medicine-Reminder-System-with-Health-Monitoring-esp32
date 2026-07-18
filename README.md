@@ -1,5 +1,22 @@
 # Smart Medicine Reminder System with Health Monitoring
 
+<p align="left">
+  <a href="https://github.com/Saipreetham0/Smart-Medicine-Reminder-System-with-Health-Monitoring-esp32/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Saipreetham0/Smart-Medicine-Reminder-System-with-Health-Monitoring-esp32?style=social"></a>
+  <a href="https://github.com/Saipreetham0/Smart-Medicine-Reminder-System-with-Health-Monitoring-esp32/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/Saipreetham0/Smart-Medicine-Reminder-System-with-Health-Monitoring-esp32?style=social"></a>
+  <img alt="License" src="https://img.shields.io/github/license/Saipreetham0/Smart-Medicine-Reminder-System-with-Health-Monitoring-esp32">
+</p>
+
+> ⭐ **Found this useful? Star the repo** — it helps other makers find it.
+
+## 📸 Demo
+
+<!-- Drop a wiring photo and a short demo GIF into docs/ then uncomment:
+![Demo](docs/demo.gif)
+![Wiring](docs/wiring.jpg)
+-->
+_Demo GIF and wiring photo coming soon._
+
+
 ## 🏥 Overview
 
 An intelligent ESP32-based medicine reminder system that helps users manage their medication schedules with automated reminders, health monitoring, and emergency notifications. The system features an 8-chamber medicine dispenser with LED indicators, buzzer alerts, GSM connectivity for SMS/call notifications, and a web-based interface for easy management.
